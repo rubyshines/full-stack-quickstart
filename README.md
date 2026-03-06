@@ -1,8 +1,8 @@
 # Full Stack Quickstart
 
-A one-click deployable full-stack app template. Built for use with [Claude Code](https://claude.ai/code) — no technical setup needed.
+A one-click deployable full-stack app template for use with [Claude Code](https://claude.ai/code). No technical setup needed.
 
-**Stack:** Next.js · PostgreSQL · Prisma · Railway
+**Stack:** React · Express · PostgreSQL · Prisma · Railway
 
 ---
 
@@ -23,59 +23,52 @@ A one-click deployable full-stack app template. Built for use with [Claude Code]
 
 1. Open [Claude Code Web](https://claude.ai/code)
 2. Connect it to your forked GitHub repo
-3. Tell Claude what you want to build — it already knows the project structure
+3. Tell Claude what you want to build
 
-**Example prompts to get started:**
-- "Add a page where users can submit their name and it saves to the database"
-- "Show a list of all submissions on the homepage"
-- "Add a delete button to each item"
-- "Style the app to look like a clean todo list"
+**Example prompts:**
+- "Add a form where users can submit their name, and save it to the database"
+- "Show all submissions on the homepage with a delete button"
+- "Make it look like a clean todo list app"
+- "Add a page that shows a count of how many items have been added"
 
-Claude handles the code, migrations, and deployment. You just describe what you want.
+Claude handles the code, database changes, and deployment. You just describe what you want.
+
+---
+
+## How it works
+
+| What you do | What happens |
+|---|---|
+| Push to `main` | Railway builds and deploys automatically |
+| Change the DB schema | Migrations run automatically on deploy |
+| Ask Claude for help | `CLAUDE.md` gives it full context about the project |
 
 ---
 
 ## Local development (optional)
 
 ```bash
-# Install dependencies
 npm install
-
-# Set up environment
 cp .env.example .env
-# Fill in DATABASE_URL in .env
+# Edit .env with your local PostgreSQL URL
 
-# Apply database schema
-npx prisma db push
-
-# Start dev server
-npm run dev
+npx prisma db push     # set up the database
+npm run dev            # start frontend + backend
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:5173](http://localhost:5173).
 
 ---
 
 ## Project structure
 
 ```
-app/
-  page.tsx          # Main page — start editing here
-  api/items/        # Example API endpoint
-lib/
-  db.ts             # Database client
-prisma/
-  schema.prisma     # Database schema
-railway.json        # Deployment config (auto-migrates on deploy)
-CLAUDE.md           # Instructions for Claude Code
+src/              # React frontend
+server/           # Express backend
+  routes/         # API endpoints (one file per resource)
+prisma/           # Database schema + migrations
+index.html        # HTML entry point
+vite.config.ts    # Dev proxy config
+railway.json      # Deployment config
+CLAUDE.md         # Context file for Claude Code
 ```
-
----
-
-## How it works
-
-- **Push to `main`** → Railway builds and deploys automatically
-- **Database migrations** run automatically on every deploy (`prisma migrate deploy`)
-- **`CLAUDE.md`** gives Claude context about the project so it always knows how to help
-
-No DevOps knowledge required. Just talk to Claude.

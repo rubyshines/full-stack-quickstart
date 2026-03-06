@@ -2,69 +2,78 @@
 
 ## What this project is
 
-A full-stack web app built with:
-- **Next.js 14** (React frontend + API routes backend)
-- **PostgreSQL** database (hosted on Railway)
-- **Prisma** ORM for database access
-- **Railway** for hosting and deployment
+A full-stack web app:
+- **React + Vite** — frontend (lives in `src/`)
+- **Express** — backend API (lives in `server/`)
+- **PostgreSQL + Prisma** — database
+- **Railway** — hosting (auto-deploys on push to `main`)
 
 ## How deployment works
 
 **Push to `main` = deploy to production. That's it.**
 
-Railway watches this repo and automatically:
-1. Builds the app
-2. Runs `prisma migrate deploy` (applies any DB schema changes)
-3. Starts the server
-
-You never need to touch Railway's dashboard after initial setup.
+Railway automatically:
+1. Runs `npm run build` (compiles React into `dist/`)
+2. Runs `prisma migrate deploy` (applies DB schema changes)
+3. Starts `node server/index.js` (Express serves the app + API)
 
 ## Project structure
 
 ```
-app/
-  page.tsx          # Main UI — edit this to change the frontend
-  layout.tsx        # HTML shell, fonts, global styles
-  api/
-    items/
-      route.ts      # Example API route (GET + POST /api/items)
-lib/
-  db.ts             # Prisma client (singleton, import from here)
+src/
+  App.tsx           # Main React UI — edit this to change the frontend
+  main.tsx          # React entry point (rarely needs editing)
+server/
+  index.js          # Express server entry point
+  routes/
+    items.js        # Example API route — copy this for new routes
 prisma/
   schema.prisma     # Database schema — edit to add/change tables
-  migrations/       # Auto-generated migration files (don't edit manually)
-railway.json        # Railway build & start config
+  migrations/       # Migration files (auto-generated, don't edit)
+index.html          # HTML shell for the React app
+vite.config.ts      # Vite config (proxies /api to Express in dev)
+railway.json        # Build + start commands for Railway
 ```
 
 ## How to make changes
 
 ### Change the UI
-Edit `app/page.tsx`. It's a React component. Push to main to deploy.
+Edit `src/App.tsx`. It's a standard React component.
 
 ### Add a new page
-Create `app/your-page/page.tsx`. It's automatically routed to `/your-page`.
+Install `react-router-dom`, then add routes in `App.tsx`. Example:
+```tsx
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+// <Route path="/about" element={<About />} />
+```
 
 ### Add a new API endpoint
-Create `app/api/your-endpoint/route.ts`. Export `GET`, `POST`, etc.
+1. Create `server/routes/your-thing.js` (copy `items.js` as a starting point)
+2. Register it in `server/index.js`:
+   ```js
+   import yourThingRouter from "./routes/your-thing.js";
+   app.use("/api/your-thing", yourThingRouter);
+   ```
+3. Call it from React: `fetch("/api/your-thing")`
 
 ### Change the database schema
-1. Edit `prisma/schema.prisma` to add or modify models
-2. Run `npx prisma migrate dev --name describe_your_change` locally, OR just push to main and Railway will apply changes automatically if you use `db push` approach
+1. Edit `prisma/schema.prisma` — add or modify models
+2. Run `npx prisma migrate dev --name describe_your_change` locally to create a migration
+3. Push to main — Railway applies the migration automatically on deploy
 
-**The simplest approach for non-local development:**
-- Edit `prisma/schema.prisma`
-- Run `npx prisma db push` in a Railway shell (or use `prisma migrate dev` locally)
-- Push code changes to main
-
-### Query the database in an API route
-```typescript
-import { db } from "@/lib/db";
+### Query the database in a route
+```js
+import { PrismaClient } from "@prisma/client";
+const db = new PrismaClient();
 
 // Fetch all items
 const items = await db.item.findMany();
 
 // Create an item
 const item = await db.item.create({ data: { name: "hello" } });
+
+// Delete an item
+await db.item.delete({ where: { id: 1 } });
 ```
 
 ## Environment variables
@@ -72,21 +81,23 @@ const item = await db.item.create({ data: { name: "hello" } });
 | Variable | Description |
 |---|---|
 | `DATABASE_URL` | Set automatically by Railway PostgreSQL plugin |
+| `PORT` | Set automatically by Railway |
 
 For local development, copy `.env.example` to `.env` and fill in your local DB URL.
 
-## Common tasks Claude should handle
+## How dev mode works
 
-- "Add a new field to the database" → Edit schema.prisma, create migration
-- "Build a form that saves to the database" → Add API route + update page.tsx
-- "Add authentication" → Suggest NextAuth.js, implement it
-- "Style the app" → Use Tailwind CSS or inline styles in page.tsx
-- "Add a new page" → Create app/[page-name]/page.tsx
-- "Deploy my changes" → Commit and push to main
+`npm run dev` starts two things in parallel:
+- Vite dev server on `http://localhost:5173` (hot-reloading React)
+- Express server on `http://localhost:3001` (API)
 
-## Important rules
+Vite automatically proxies `/api/*` requests to Express, so your React code always just calls `/api/...` regardless of environment.
 
-- Always use `db` from `@/lib/db` for database access (not `new PrismaClient()`)
-- Never commit `.env` files
-- API routes live in `app/api/*/route.ts`
-- Migrations in `prisma/migrations/` should not be manually edited
+## Common tasks
+
+- "Add a new field to the database" → Edit `prisma/schema.prisma`, run migrate
+- "Build a form that saves data" → Add a POST route in `server/routes/`, call it from `App.tsx`
+- "Show data from the database" → Add a GET route, fetch it in `useEffect` in `App.tsx`
+- "Add a second page" → Install react-router-dom, add a route
+- "Style the app" → Add CSS in `index.html` or install Tailwind CSS
+- "Deploy changes" → Commit and push to `main`

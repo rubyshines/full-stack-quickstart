@@ -1,10 +1,8 @@
-"use client";
-
 import { useEffect, useState } from "react";
 
 type Item = { id: number; name: string; createdAt: string };
 
-export default function Home() {
+export default function App() {
   const [items, setItems] = useState<Item[]>([]);
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -14,7 +12,9 @@ export default function Home() {
     setItems(await res.json());
   }
 
-  useEffect(() => { fetchItems(); }, []);
+  useEffect(() => {
+    fetchItems();
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -33,7 +33,9 @@ export default function Home() {
   return (
     <main>
       <h1>My App</h1>
-      <p>Edit <code>app/page.tsx</code> to customize this page. Ask Claude to help!</p>
+      <p>
+        Edit <code>src/App.tsx</code> to change this page. Ask Claude to help!
+      </p>
 
       <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8, margin: "24px 0" }}>
         <input
